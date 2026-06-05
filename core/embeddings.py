@@ -1,7 +1,3 @@
-"""
-core/embeddings.py — Free local embeddings using HuggingFace sentence-transformers
-No API key needed. Model downloads once (~90MB) and runs locally.
-"""
 from typing import List
 import numpy as np
 from config import config
@@ -11,10 +7,7 @@ log = get_logger("embeddings")
 
 
 class EmbeddingEngine:
-    """
-    Generates vector embeddings using local HuggingFace models.
-    100% free — runs on CPU, no external API calls.
-    """
+    
 
     def __init__(self, model_name: str = config.EMBEDDING_MODEL):
         self.model_name = model_name

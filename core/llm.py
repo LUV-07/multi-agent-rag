@@ -1,8 +1,4 @@
-"""
-core/llm.py — Free LLM via Groq API
-Groq provides free API access to LLaMA3, Mixtral, Gemma models.
-Get your free API key: https://console.groq.com
-"""
+
 import os
 from typing import Generator
 from utils.logger import get_logger
@@ -12,7 +8,6 @@ log = get_logger("llm")
 
 class LLMEngine:
     """
-    Wrapper around Groq's free LLM API.
     Reads API key from environment at call time (not at import time),
     so it works correctly when the key is set via the Streamlit sidebar.
     """

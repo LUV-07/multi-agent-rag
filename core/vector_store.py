@@ -1,7 +1,3 @@
-"""
-core/vector_store.py — FAISS-based local vector store
-100% free, runs locally, no cloud dependencies.
-"""
 import os
 import json
 import pickle

@@ -1,6 +1,3 @@
-"""
-ui/styles.py — Custom CSS for Streamlit
-"""
 
 CUSTOM_CSS = """
 <style>

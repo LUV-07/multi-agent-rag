@@ -1,8 +1,3 @@
-"""
-app.py — Multi-Agent RAG System
-Run with: streamlit run app.py
-"""
-
 import os
 import sys
 import tempfile

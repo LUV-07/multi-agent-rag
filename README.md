@@ -42,10 +42,10 @@ Answer shown in Streamlit UI
 | Layer | Tool | Why |
 |---|---|---|
 | Frontend | Streamlit | Fast, clean UI with no frontend code |
-| LLM | Gemini 1.5 Flash | Free tier — 1M tokens/day |
+| LLM | Groq API | Free tier — 1M tokens/day |
 | Embeddings | sentence-transformers (HuggingFace) | Runs locally, completely free |
-| Vector DB | ChromaDB | Local, persistent, no setup needed |
-| Framework | LangChain | Agent orchestration and prompt management |
+| Vector DB | FAISS | Local, persistent, no setup needed |
+| Framework | Custom Python Orchestrator | Agent orchestration and prompt management |
 | Document parsing | PyMuPDF, python-docx | PDF and DOCX support |
 
 **Total cost to run: $0** — everything except Gemini runs locally. Gemini's free tier gives you 15 requests/minute and 1 million tokens per day.

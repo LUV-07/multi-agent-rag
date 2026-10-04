@@ -17,20 +17,18 @@ Ask questions about any document and get accurate, cited answers powered by a mu
 
 ## How it works
 
-When you upload a document, it gets split into small chunks and converted into numerical embeddings using a local HuggingFace model. These embeddings are stored in ChromaDB on your machine.
+When you upload a document, it gets split into small chunks and converted into numerical embeddings using a local HuggingFace model. These embeddings are stored in FAISS on your machine.
 
 When you ask a question, four agents work together:
 
 ```
 Your Question
       ↓
-Orchestrator Agent — figures out what you're asking (Q&A, summarize, key points)
+Orchestrator — figures out what you're asking (Q&A, summarize, key points)
       ↓
 Retrieval Agent — searches ChromaDB for the most relevant chunks
       ↓
-Reasoning Agent — thinks through the retrieved context step by step
-      ↓
-Generation Agent — writes the final answer with source citations
+Q/A Agent — thinks through the retrieved context step by step & writes the final answer with source citations
       ↓
 Answer shown in Streamlit UI
 ```
@@ -63,8 +61,8 @@ multi_agent_rag/
 ├── agents/
 │   ├── orchestrator.py           # Routes queries to the right agent
 │   ├── retrieval_agent.py        # Semantic search over your document
-│   ├── reasoning_agent.py        # Chain-of-thought reasoning
-│   └── generation_agent.py      # Final answer with citations
+│   ├── Q/A_agent.py        # Chain-of-thought reasoning &  Final answer with citations
+│        
 │
 ├── core/
 │   ├── document_processor.py    # Ingests and chunks documents
@@ -110,7 +108,7 @@ cp .env.example .env
 Open `.env` and paste your key:
 
 ```
-GEMINI_API_KEY=your_key_here
+GROQ_API_KEY=your_key_here
 ```
 
 ### 5. Run the app
@@ -148,7 +146,7 @@ Your browser will open automatically at `http://localhost:8501`.
 
 | Variable | Description |
 |---|---|
-| `GEMINI_API_KEY` | Your Google Gemini API key (required) |
+| `GROQ_API_KEY` | Your GROQ API key (required) |
 | `CHUNK_SIZE` | Token size per document chunk (default: 500) |
 | `CHUNK_OVERLAP` | Overlap between chunks (default: 50) |
 | `TOP_K_RESULTS` | Number of chunks retrieved per query (default: 5) |

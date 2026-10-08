@@ -1,54 +1,132 @@
-# 🧠 Multi-Agent RAG — Document Q&A System
+# 🧠 Multi-Agent RAG — Document Q&A & Summarization System
 
-Ask questions about your documents and get **document-grounded answers with source information** through a modular multi-agent AI pipeline.
+A modular **Retrieval-Augmented Generation (RAG)** system for document question answering, summarization, and key-information extraction.
 
-Upload a document, ask questions about its contents, generate summaries, or extract key information through a Streamlit-based interface.
-
----
-
-## What it does
-
-- **Upload documents** — PDF, DOCX, TXT, Markdown, PPTX, XLSX, and HTML
-- **Ask questions in natural language** — retrieves the most relevant document chunks before generating an answer
-- **Document-grounded Q&A** — answers are generated using the retrieved document context
-- **Summarize documents** — generate summaries from the indexed document content
-- **Extract key information** — use the summarization workflow to identify important information
-- **Source information** — responses include the source/page information associated with retrieved chunks
-- **Grounding validation** — performs a post-generation context-support check on generated answers
-- **Local vector search** — uses FAISS for persistent local similarity search
-- **Multiple LLM options** — supports selectable models through the Groq API
+The application allows users to upload documents, retrieve relevant content using semantic vector search, generate document-grounded answers through an LLM, inspect source information, and request document summaries through a Streamlit interface.
 
 ---
 
-## How it works
+## ✨ Features
+
+- 📄 **Multi-format document ingestion**
+  - PDF
+  - DOCX
+  - TXT
+  - Markdown
+  - PPTX
+  - XLSX
+  - HTML
+
+- 🔎 **Semantic document retrieval**
+  - Sentence Transformer embeddings
+  - FAISS vector search
+  - Top-K configurable retrieval
+  - Similarity-threshold filtering
+
+- 🤖 **Multi-agent architecture**
+  - Ingestion Agent
+  - Retrieval Agent
+  - QA Agent
+  - Summarizer Agent
+  - Custom Python Orchestrator
+
+- 💬 **Document-grounded Q&A**
+  - Answers generated using retrieved document context
+  - Context-only prompting
+  - Source information displayed with responses
+
+- ✅ **Grounding validation**
+  - Post-generation context-support check
+  - Grounding score for the generated answer
+  - Helps identify potentially unsupported responses
+
+- 📝 **Document summarization**
+  - Multiple summary modes
+  - Document-level summaries
+  - Key-information extraction
+
+- 🖥️ **Interactive Streamlit interface**
+  - Document upload
+  - Question answering
+  - Source inspection
+  - Summarization
+
+- 📦 **50 MB upload limit**
+
+---
+
+## 🏗️ Architecture
 
 The system uses a modular four-agent architecture coordinated by a custom Python orchestrator.
 
-### Document ingestion
+```text
+                     ┌─────────────────────┐
+                     │    Streamlit UI     │
+                     └──────────┬──────────┘
+                                │
+                  ┌─────────────▼─────────────┐
+                  │   Python Orchestrator     │
+                  └─────────────┬─────────────┘
+                                │
+          ┌─────────────────────┼─────────────────────┐
+          │                     │                     │
+          ▼                     ▼                     ▼
+ ┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+ │ Ingestion      │    │ Retrieval      │    │ Summarizer     │
+ │ Agent          │    │ Agent          │    │ Agent          │
+ └───────┬────────┘    └───────┬────────┘    └────────────────┘
+         │                     │
+         ▼                     ▼
+   Document Processing     Semantic Search
+         │                     │
+         ▼                     ▼
+     Embeddings              FAISS
+         │                     │
+         └──────────┬──────────┘
+                    ▼
+             ┌───────────────┐
+             │    QA Agent   │
+             └───────┬───────┘
+                     │
+                     ▼
+                Groq LLM
+                     │
+                     ▼
+             Grounding Check
+                     │
+                     ▼
+               Answer + Sources
+```
 
-When a document is uploaded:
+The ingestion flow extracts document text, performs paragraph-aware chunking, generates embeddings, and stores them in FAISS. Questions are embedded with the same Sentence Transformer model and matched against the indexed document chunks before being passed to the QA agent.
+
+---
+
+## 🔄 How It Works
+
+### 1. Document Ingestion
 
 ```text
 Document
    ↓
-Document Processor
+Validation
    ↓
 Text Extraction
    ↓
 Paragraph-aware Chunking
    ↓
-Sentence Transformer Embeddings
+Sentence Transformer
    ↓
-FAISS Vector Store
+Embedding Normalization
+   ↓
+FAISS Index
 ```
 
-The document processor extracts text while preserving relevant metadata such as page information. The text is divided into configurable chunks and converted into embeddings using a local Sentence Transformer model.
+The ingestion pipeline preserves relevant source metadata such as page information where available. The resulting embeddings are normalized before being stored in FAISS for local similarity search.
 
-The embeddings are normalized and stored in FAISS for efficient similarity search.
+---
 
-### Question answering
-
-When a user asks a question:
+### 2. Question Answering
 
 ```text
 User Question
@@ -61,7 +139,7 @@ Question Embedding
       ↓
 FAISS Similarity Search
       ↓
-Relevant Document Chunks
+Top-K Relevant Chunks
       ↓
 QA Agent
       ↓
@@ -70,110 +148,177 @@ Groq LLM
 Grounding Validation
       ↓
 Answer + Sources
-      ↓
-Streamlit UI
 ```
 
-The retrieval agent searches the FAISS index for relevant chunks. These chunks are then passed as context to the QA agent, which generates the answer through the configured Groq model.
-
-A post-generation grounding check compares the generated response with the retrieved context to estimate how strongly the answer is supported by the available document evidence.
+The Retrieval Agent searches the FAISS index for the most relevant chunks. The QA Agent then receives the user's question together with the retrieved context and generates a document-grounded response.
 
 ---
 
-## Multi-Agent Architecture
-
-The project contains four specialized agents:
+## 🤖 Multi-Agent Design
 
 ### 1. Ingestion Agent
 
-Responsible for preparing uploaded documents for retrieval.
+Responsible for:
 
-```text
-Document
-   ↓
-Validation
-   ↓
-Text Extraction
-   ↓
-Chunking
-   ↓
-Embedding Generation
-   ↓
-FAISS Indexing
-```
+- Validating uploaded documents
+- Extracting text
+- Chunking content
+- Generating embeddings
+- Indexing document chunks in FAISS
 
 ### 2. Retrieval Agent
 
-Responsible for finding relevant information from the indexed document.
+Responsible for:
 
-```text
-User Question
-      ↓
-Question Embedding
-      ↓
-FAISS Search
-      ↓
-Similarity Filtering
-      ↓
-Top-K Relevant Chunks
-```
+- Embedding the user's query
+- Searching the FAISS vector store
+- Applying similarity filtering
+- Returning the most relevant chunks
 
 ### 3. QA Agent
 
-Responsible for generating document-grounded answers.
+Responsible for:
 
-It receives:
-
-```text
-User Question
-        +
-Retrieved Context
-        ↓
-     Groq LLM
-        ↓
-Generated Answer
-        ↓
-Grounding Validation
-```
-
-The QA workflow is designed to restrict answers to the retrieved document context rather than relying on unrelated external knowledge.
+- Receiving the user question
+- Receiving retrieved document context
+- Generating a grounded response using the Groq LLM
+- Returning answer content for grounding validation
 
 ### 4. Summarizer Agent
 
-Responsible for generating document summaries from the retrieved document content.
+Responsible for:
 
-It supports different summary modes through the application interface.
+- Generating summaries from indexed document content
+- Supporting different summarization modes
+- Extracting important information from documents
 
----
+### Orchestrator
 
-## Tech Stack
-
-| Layer | Technology | Purpose |
-|---|---|---|
-| Frontend | Streamlit | Interactive document upload, Q&A and summarization interface |
-| LLM | Groq API | LLM inference |
-| LLM Models | LLaMA / Gemma models | Answer and summary generation |
-| Embeddings | Sentence Transformers | Local semantic embedding generation |
-| Embedding Model | `all-MiniLM-L6-v2` | Converts document text and queries into vectors |
-| Vector Search | FAISS | Local persistent similarity search |
-| Orchestration | Custom Python Orchestrator | Coordinates the four agents |
-| PDF Processing | PyMuPDF | PDF text extraction |
-| DOCX Processing | python-docx | DOCX text extraction |
-| Additional Formats | Markdown, PPTX, XLSX, HTML | Extended document ingestion |
-| UI | Streamlit | Application interface |
-
-The embeddings and vector search run locally. LLM inference is performed through the Groq API.
+The custom Python Orchestrator coordinates the document ingestion, retrieval, question answering, and summarization workflows.
 
 ---
 
-## Project Structure
+## 🔍 Embeddings & Vector Retrieval
+
+The system uses:
+
+```text
+Model: all-MiniLM-L6-v2
+```
+
+Embedding pipeline:
+
+```text
+Document Chunk
+      ↓
+Sentence Transformer
+      ↓
+Embedding Vector
+      ↓
+Normalization
+      ↓
+FAISS
+```
+
+Both document chunks and user queries are embedded using the same Sentence Transformer model.
+
+The normalized vectors are stored in FAISS and searched using inner-product similarity, providing cosine-similarity-style semantic retrieval. The number of retrieved chunks and similarity threshold are configurable.
+
+---
+
+## ✂️ Chunking Strategy
+
+The document processor uses **paragraph-aware, word-based chunking**.
+
+### Default configuration
+
+| Parameter | Value |
+|---|---:|
+| Chunk size | 512 words |
+| Chunk overlap | 200 words |
+| Default retrieved chunks | 5 |
+| Maximum upload size | 50 MB |
+
+Paragraph-aware splitting attempts to preserve logical document structure while the overlap helps maintain contextual continuity between neighboring chunks.
+
+---
+
+## ✅ Grounding Validation
+
+After the QA Agent generates an answer, the system performs a lightweight post-generation grounding check.
+
+```text
+Retrieved Context
+       +
+Generated Answer
+       ↓
+Context Support Check
+       ↓
+Grounding Score
+```
+
+The grounding score estimates how strongly the generated answer is supported by the retrieved document context.
+
+This mechanism is intended as a **lightweight context-support check**, not as a formal guarantee that an answer is completely hallucination-free.
+
+---
+
+## 📚 Supported Documents
+
+The ingestion pipeline currently supports:
+
+- `.pdf`
+- `.docx`
+- `.txt`
+- `.md`
+- `.pptx`
+- `.xlsx`
+- `.html`
+
+Maximum upload size: **50 MB**.
+
+### Note
+
+Text-heavy documents generally produce better results.
+
+Scanned PDFs without an extractable text layer require OCR before their content can be processed effectively.
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|---|---|
+| Language | Python |
+| Frontend | Streamlit |
+| LLM API | Groq |
+| LLM Models | LLaMA / Gemma |
+| Embeddings | Sentence Transformers |
+| Embedding Model | `all-MiniLM-L6-v2` |
+| Vector Search | FAISS |
+| Orchestration | Custom Python Orchestrator |
+| PDF Processing | PyMuPDF |
+| DOCX Processing | python-docx |
+| PPTX Processing | python-pptx |
+| Excel Processing | openpyxl |
+| HTML Processing | BeautifulSoup |
+| Text Processing | LangChain |
+| Configuration | python-dotenv |
+
+Embeddings and vector search run locally, while LLM inference is performed through the Groq API.
+
+---
+
+## 📁 Project Structure
 
 ```text
 multi-agent-rag/
 │
 ├── app.py
+├── config.py
 ├── requirements.txt
 ├── .env.example
+├── test_setup.py
 │
 ├── agents/
 │   ├── orchestrator.py
@@ -189,141 +334,53 @@ multi-agent-rag/
 │   ├── llm_engine.py
 │   └── prompt_templates.py
 │
-├── utils/
-│   ├── text_splitter.py
-│   └── helpers.py
+├── ui/
 │
-└── config.py
+└── utils/
+    ├── text_splitter.py
+    └── helpers.py
 ```
 
-### Important modules
+### Important Modules
 
 **`app.py`**  
 Streamlit application and user interface.
 
 **`agents/orchestrator.py`**  
-Coordinates ingestion, retrieval, question answering and summarization.
+Coordinates ingestion, retrieval, question answering, and summarization.
 
 **`agents/ingestion_agent.py`**  
-Processes uploaded documents and indexes their contents.
+Processes uploaded documents and indexes their content.
 
 **`agents/retrieval_agent.py`**  
-Performs semantic retrieval against the FAISS vector store.
+Performs semantic retrieval against FAISS.
 
 **`agents/qa_agent.py`**  
-Generates document-grounded answers using the configured Groq model.
+Generates document-grounded responses using the configured Groq model.
 
 **`agents/summarizer_agent.py`**  
-Generates summaries from retrieved document content.
+Generates document summaries.
 
 **`core/document_processor.py`**  
-Extracts and prepares text from supported document formats.
+Extracts and prepares text from supported formats.
 
 **`core/embeddings.py`**  
-Generates embeddings using Sentence Transformers.
+Generates Sentence Transformer embeddings.
 
 **`core/vector_store.py`**  
-Provides the FAISS vector-store implementation and persistence.
+Handles FAISS indexing, similarity search, and persistence.
 
 **`core/llm_engine.py`**  
-Handles communication with the Groq API and configured LLM models.
+Handles Groq API communication and model configuration.
 
 **`utils/text_splitter.py`**  
-Provides paragraph-aware text chunking.
+Implements paragraph-aware chunking.
 
-**`config.py`**  
-Stores application configuration and environment-based settings.
-
----
-
-## Supported Documents
-
-The current ingestion pipeline supports:
-
-- PDF
-- DOCX
-- TXT
-- Markdown (`.md`)
-- PowerPoint (`.pptx`)
-- Excel (`.xlsx`)
-- HTML (`.html`)
-
-The application supports document uploads up to **50 MB**.
-
-Text-heavy documents generally provide the best results. Scanned PDFs that do not contain an extractable text layer require OCR before their contents can be effectively processed.
+The repository's current structure and module responsibilities are documented in the project itself.
 
 ---
 
-## Embedding and Retrieval
-
-The project uses the Sentence Transformers model:
-
-```text
-all-MiniLM-L6-v2
-```
-
-The pipeline is:
-
-```text
-Document Chunk
-      ↓
-Sentence Transformer
-      ↓
-Embedding Vector
-      ↓
-Normalization
-      ↓
-FAISS
-```
-
-User questions are embedded using the same model and searched against the FAISS index.
-
-The vector store uses normalized embeddings with inner-product search, providing cosine-similarity-style semantic retrieval.
-
-The number of retrieved results and relevance threshold are configurable.
-
----
-
-## Chunking
-
-The document processor uses paragraph-aware, word-based chunking.
-
-Current default configuration:
-
-```text
-Chunk Size   : 512
-Chunk Overlap: 200
-```
-
-The overlap helps preserve contextual continuity between adjacent chunks.
-
-Chunking is performed while retaining relevant document metadata so that retrieved content can be associated with its source information.
-
----
-
-## Grounding Validation
-
-After the QA agent generates an answer, the system performs a post-generation grounding check.
-
-Conceptually:
-
-```text
-Retrieved Context
-       +
-Generated Answer
-       ↓
-Context Support Check
-       ↓
-Grounding Score
-```
-
-The resulting score indicates how strongly the generated answer is supported by the retrieved context.
-
-This is a lightweight grounding mechanism and should not be interpreted as a formal guarantee that an answer is completely hallucination-free.
-
----
-
-## Setup
+## ⚙️ Installation
 
 ### 1. Clone the repository
 
@@ -338,51 +395,49 @@ cd multi-agent-rag
 pip install -r requirements.txt
 ```
 
-### 3. Get a Groq API key
+### 3. Configure the Groq API key
 
-Create a Groq API key through the Groq developer platform.
-
-### 4. Configure environment variables
-
-Copy the example environment file:
+Create a `.env` file from the provided template:
 
 ```bash
 cp .env.example .env
 ```
 
-Then add your API key:
+Then add:
 
 ```env
 GROQ_API_KEY=your_key_here
 ```
 
-### 5. Run the application
+### 4. Run the application
 
 ```bash
 streamlit run app.py
 ```
 
-The application will be available at:
+The application will normally be available at:
 
 ```text
 http://localhost:8501
 ```
 
+These are the repository's current setup and execution steps.
+
 ---
 
-## Usage
+## 🖥️ Usage
 
-1. Open the application in your browser.
+1. Launch the Streamlit application.
 2. Upload a supported document.
-3. Wait while the document is extracted, chunked, embedded and indexed.
-4. Ask questions about the document.
-5. Review the generated answer and its source information.
-6. Use the summarization functionality when a document-level summary is required.
-7. Inspect the retrieved source information to understand which document content was used.
+3. Wait for text extraction, chunking, embedding, and indexing.
+4. Ask a question about the document.
+5. Review the generated answer.
+6. Inspect the retrieved source information.
+7. Use the summarization functionality when a document-level summary is required.
 
 ---
 
-## Example Questions
+## 💬 Example Questions
 
 ```text
 What is the main argument of this paper?
@@ -400,56 +455,73 @@ What evidence does the document provide for this claim?
 
 ---
 
-## Environment Variables
+## 🔐 Environment Variables
 
-| Variable | Description |
-|---|---|
-| `GROQ_API_KEY` | Groq API key required for LLM inference |
-| `CHUNK_SIZE` | Maximum configured chunk size; default: 512 |
-| `CHUNK_OVERLAP` | Chunk overlap; default: 200 |
-| `TOP_K_RESULTS` | Number of chunks retrieved per query; default: 5 |
-| `SIMILARITY_THRESHOLD` | Minimum retrieval similarity threshold |
+| Variable | Description | Default |
+|---|---|---:|
+| `GROQ_API_KEY` | Groq API key required for LLM inference | Required |
+| `CHUNK_SIZE` | Maximum configured chunk size | `512` |
+| `CHUNK_OVERLAP` | Chunk overlap | `200` |
+| `TOP_K_RESULTS` | Number of retrieved chunks | `5` |
+| `SIMILARITY_THRESHOLD` | Minimum retrieval similarity | Configurable |
+
+These settings are exposed through the application's configuration system.
 
 ---
 
-## Known Limitations
+## ⚠️ Known Limitations
 
-- Text-heavy documents generally produce better results than scanned/image-only documents.
+- Text-heavy documents generally produce better results than scanned or image-only documents.
 - Scanned PDFs without an extractable text layer require OCR.
-- Large documents can require additional processing time during the first upload.
-- Answer quality depends on the relevance of retrieved chunks and the selected LLM.
-- The grounding check is a lightweight lexical/context-support mechanism rather than a formal hallucination detector.
+- Large documents may require additional processing time during initial indexing.
+- Answer quality depends on retrieval quality and the selected LLM.
+- The grounding mechanism is a lightweight context-support check rather than a formal hallucination detector.
 - LLM inference requires access to the configured Groq API.
-- Very similar or poorly separated chunks can sometimes result in redundant retrieval results.
+- Very similar chunks may sometimes produce redundant retrieval results.
 
 ---
 
-## Future Improvements
+## 🚀 Future Improvements
 
-Potential improvements to the current system include:
+Potential improvements include:
 
 - Hybrid keyword + semantic retrieval
 - Retrieval reranking
-- Automated RAG evaluation using Recall@K, MRR and answer relevance
+- Automated RAG evaluation using Recall@K, MRR, and answer relevance
 - More advanced grounding and faithfulness evaluation
 - Conversation-aware retrieval
 - Improved OCR support for scanned documents
-- REST API layer using FastAPI
-- More sophisticated caching mechanisms
+- FastAPI REST API layer
+- More sophisticated caching
+
+These are intentionally listed as **future improvements rather than current features**, so the README does not overstate the current implementation.
 
 ---
 
-## Built With
+## 🧩 Design Philosophy
 
-- [Groq API](https://groq.com/)
-- [FAISS](https://github.com/facebookresearch/faiss)
-- [Sentence Transformers](https://www.sbert.net/)
-- [Streamlit](https://streamlit.io/)
-- [PyMuPDF](https://pymupdf.readthedocs.io/)
-- [LangChain](https://www.langchain.com/)
+The project focuses on keeping the RAG pipeline modular:
+
+```text
+Document Processing
+        ↓
+Embedding Generation
+        ↓
+Vector Retrieval
+        ↓
+Context Construction
+        ↓
+LLM Generation
+        ↓
+Grounding Validation
+        ↓
+Source-aware Response
+```
+
+Each stage is separated into dedicated modules and agents, making the system easier to extend, debug, and evaluate.
 
 ---
 
-## License
+## 📄 License
 
-MIT — free to use, modify, and distribute.
+MIT License.
